@@ -1,0 +1,26 @@
+# Python 캐시 파일
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 가상환경
+venv/
+env/
+ENV/
+
+# 테스트 결과 및 리포트
+results/
+.pytest_cache/
+*.log
+
+# IDE 설정
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS 파일
+.DS_Store
+Thumbs.db

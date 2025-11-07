@@ -1,5 +1,6 @@
 from playwright.sync_api import Page
-from config.config import LoginConfig
+from config import config
+from config.utils import get_login_url
 from locator.locators_login import LoginPageLocators
 
 
@@ -14,7 +15,7 @@ class LoginPage:
 
     def goto_login_page(self):
         """로그인 페이지로 이동"""
-        login_url = LoginConfig.get_login_url()
+        login_url = get_login_url()
         self.page.goto(login_url)
         print(f"[OK] 로그인 페이지 접속: {login_url}")
 
@@ -42,9 +43,9 @@ class LoginPage:
     def login(self, email: str = None, password: str = None):
         """로그인 수행 (전체 프로세스)"""
         if email is None:
-            email = LoginConfig.EMAIL
+            email = config.EMAIL
         if password is None:
-            password = LoginConfig.PASSWORD
+            password = config.PASSWORD
 
         self.goto_login_page()
         self.fill_email(email)

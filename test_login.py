@@ -1,33 +1,36 @@
 """
-테스트 실행 스크립트
-python test_login.py 명령으로 테스트를 실행합니다.
+로그인 테스트
+WMS와 POS 서비스 로그인 및 네비게이션을 테스트합니다.
+
+실행 방법:
+  python test_login.py         # 브라우저 보면서 실행, 로그 저장
+  pytest test_login.py         # pytest로 실행
+  pytest test_login.py -v      # 상세 출력
 """
 
 import sys
-import io
 import pytest
 from datetime import datetime
 from pathlib import Path
+from playwright.sync_api import Page
+from pages.login_page import LoginPage
+from pages.dashboard_page import DashboardPage
+from config.constants import ServiceType
 
 
 class TeeOutput:
     """콘솔과 파일에 동시 출력하는 클래스"""
 
-    def __init__(self, file_path, console_encoding='utf-8'):
+    def __init__(self, file_path):
         self.file = open(file_path, 'w', encoding='utf-8')
         self.console = sys.stdout
-        self.console_encoding = console_encoding
 
     def write(self, message):
-        # 파일에 UTF-8로 저장
         self.file.write(message)
         self.file.flush()
-
-        # 콘솔에 출력 (Windows CMD 인코딩 처리)
         try:
             self.console.write(message)
         except UnicodeEncodeError:
-            # 콘솔에서 표시할 수 없는 문자는 ? 로 대체
             safe_message = message.encode('cp949', errors='replace').decode('cp949')
             self.console.write(safe_message)
         self.console.flush()
@@ -40,12 +43,29 @@ class TeeOutput:
         self.file.close()
 
     def isatty(self):
-        """터미널 여부 확인"""
         return self.console.isatty() if hasattr(self.console, 'isatty') else False
 
     def fileno(self):
-        """파일 디스크립터 반환"""
         return self.console.fileno() if hasattr(self.console, 'fileno') else None
+
+
+class TestLogin:
+    """로그인 테스트 클래스"""
+
+    @pytest.mark.parametrize("service_type", [ServiceType.WMS, ServiceType.POS])
+    def test_login_and_navigate_to_service(self, page: Page, service_type: str):
+        """WMS와 POS 각 1번씩 테스트 - 로그인 후 각 서비스 버튼 클릭 및 대시보드 이동"""
+        # 로그인
+        login_page = LoginPage(page)
+        login_page.login()
+
+        # 지정된 서비스 버튼 클릭 및 대시보드 이동 확인
+        dashboard_page = DashboardPage(page)
+        dashboard_page.click_service_button(service_type)
+        dashboard_page.verify_dashboard_url()
+
+        service_name = "WMS QA" if service_type == ServiceType.WMS else "POS"
+        print(f"[OK] {service_name} 버튼 클릭 테스트 성공!")
 
 
 if __name__ == "__main__":
@@ -75,7 +95,7 @@ if __name__ == "__main__":
     try:
         # pytest 실행 옵션
         args = [
-            "test/test_login_suite.py",
+            __file__,  # 현재 파일
             "--headed",  # 브라우저 표시
             "-v",  # 상세 출력
             "-s",  # print 출력 표시
